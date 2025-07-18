@@ -12,12 +12,6 @@ void Render(const std::function<void()>& on_thread_begin)
 {
     on_thread_begin();
     on_thread_begin();
-    on_thread_begin();
-    on_thread_begin();
-    on_thread_begin();
-    on_thread_begin();
-    on_thread_begin();
-    on_thread_begin();
 }
 
 int main()

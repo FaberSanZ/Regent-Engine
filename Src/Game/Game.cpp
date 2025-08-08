@@ -216,67 +216,11 @@ int main()
         }
 
 
-  //      static int tick = 0;
-		//scale += 0.01f;
+        // Frame de animación
+        //static int tick = 0;
+        //int frame = tick++ / 5 % 10;
+        //int2 cell = { frame % ATLAS_COLS, frame / ATLAS_COLS };
 
-  //      // Frame de animación
-  //      int frame = tick++ / 5 % 10;
-  //      //int2 cell = { frame % ATLAS_COLS, frame / ATLAS_COLS };
-  //      int2 cell = { 1, 0 };
-
-
-  //      // Tamaño del sprite
-  //      int spriteW = (ATLAS_WIDTH / ATLAS_COLS);
-  //      int spriteH = (ATLAS_HEIGHT / ATLAS_ROWS);
-
-  //      for(int x = 0; x < 24; ++x)
-  //      {
-  //          for(int y = 0; y < 24; ++y)
-  //          {
-  //              int i = x + y * 24;
-		//		int spriteIndex = (x + y * 24) % spriteCount; // wrap around if spriteCount is less than 576
-
-  //              if (i >= MAX_SPRITES) 
-  //                  break; // avoid overflow
-
-  //              // Clear sprite
-  //              spriteBatch[i] = {};
-  //              // Set sprite position
-  //              spriteBatch[i].screenPos.x = x * spriteW;
-  //              spriteBatch[i].screenPos.y = y * spriteH;
-  //              // Set sprite size
-  //              spriteBatch[i].size.x = spriteW;
-  //              spriteBatch[i].size.y = spriteH;
-  //              // Set atlas position
-  //              spriteBatch[i].atlasPos.x = cell.x * spriteW;
-  //              spriteBatch[i].atlasPos.y = cell.y * spriteH;
-  //              // Set scale
-		//		spriteBatch[i].scale = scale;
-
-		//	}
-		//}
-
-	    int spriteidx =  -1; // index for spriteBatch
-        // Sprite 1
-
-        //spriteidx++;
-        //// Sprite 2
-        //spriteBatch[1] =
-        //{
-        //    {50, 200},
-        //    {128, 128},
-        //    {256, 416},
-        //    1.0f
-        //};
-
-
-        //spriteBatch[1] =
-        //{
-        //    {50, 200},
-        //    {128, 128},
-        //    {256, 416},
-        //    1.0f
-        //};
 
 
         for(int i = 0; i < 3; ++i)
@@ -306,7 +250,6 @@ int main()
             spriteBatch[i].scale = 1;
         }
 
-        //// Sprite 2
         spriteBatch[8] =
         {
             {128 * 6, 180 * 2},

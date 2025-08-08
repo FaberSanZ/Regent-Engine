@@ -13,7 +13,7 @@ struct sprite
     int2 screenpos;
     int2 size;
     int2 atlaspos;
-    float scale; // nuevo campo
+    float scale;
 };
 
 struct pixel

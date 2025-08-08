@@ -1,4 +1,4 @@
-// Game.cpp : This file contains the 'main' function. Program execution begins and ends there.
+ï»¿// Game.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 #pragma comment(lib, "user32")
@@ -10,7 +10,8 @@
 #include <d3d11_1.h>
 #include <d3dcompiler.h>
 
-#include "texture.h" // sprite sheet
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 
 #define TITLE L"Sprite renderer"
@@ -83,7 +84,20 @@ int main()
     device->CreateRenderTargetView(framebufferTexture, nullptr, &framebufferRTV);
 
 
-    float constantData[4] = { 2.0f / swapChainDesc.Width, -2.0f / swapChainDesc.Height, 1.0f / ATLAS_WIDTH, 1.0f / ATLAS_HEIGHT }; // one-time calc here to make it simpler for the shader later (float2 rn_screensize, r_atlassize)
+
+    int texWidth, texHeight, texChannels;
+    unsigned char* pixels = stbi_load("../../Assets/Textures/rollingBall_sheet2.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
+    if (!pixels)
+    {
+        printf("Error cargando imagen\n");
+        //return;
+    }
+
+
+
+
+    float constantData[4] = { 2.0f / swapChainDesc.Width, -2.0f / swapChainDesc.Height, 1.0f / texWidth, 1.0f / texHeight }; // one-time calc here to make it simpler for the shader later (float2 rn_screensize, r_atlassize)
 
     D3D11_BUFFER_DESC constantBufferDesc = {};
     constantBufferDesc.ByteWidth = sizeof(constantData) + 0xf & 0xfffffff0; // ensure constant buffer size is multiple of 16 bytes
@@ -97,23 +111,28 @@ int main()
     device->CreateBuffer(&constantBufferDesc, &constantSRD, &constantBuffer);
 
 
+
+
+
+
+
     D3D11_TEXTURE2D_DESC atlasTextureDesc = {};
-    atlasTextureDesc.Width = ATLAS_WIDTH;
-    atlasTextureDesc.Height = ATLAS_HEIGHT;
+    atlasTextureDesc.Width = texWidth;
+    atlasTextureDesc.Height = texHeight;
     atlasTextureDesc.MipLevels = 1;
     atlasTextureDesc.ArraySize = 1;
-    atlasTextureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    atlasTextureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     atlasTextureDesc.SampleDesc.Count = 1;
     atlasTextureDesc.Usage = D3D11_USAGE_IMMUTABLE;
     atlasTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
-    D3D11_SUBRESOURCE_DATA atlasSRD = {};
-    atlasSRD.pSysMem = atlasData;
-    atlasSRD.SysMemPitch = ATLAS_WIDTH * sizeof(UINT);
+    D3D11_SUBRESOURCE_DATA initData = {};
+    initData.pSysMem = pixels;
+    initData.SysMemPitch = texWidth * 4; // 4 bytes por pixel (RGBA)
 
     ID3D11Texture2D* atlasTexture;
 
-    device->CreateTexture2D(&atlasTextureDesc, &atlasSRD, &atlasTexture);
+    device->CreateTexture2D(&atlasTextureDesc, &initData, &atlasTexture);
 
     ID3D11ShaderResourceView* atlasSRV;
 
@@ -186,7 +205,6 @@ int main()
 
     float scale = 0.0f;
 	int spriteCount = 24 * 24; // number of sprites to render in this example
-
     while (true)
     {
         MSG msg;
@@ -198,18 +216,18 @@ int main()
         }
 
 
-        static int tick = 0;
-		scale += 0.01f;
+  //      static int tick = 0;
+		//scale += 0.01f;
 
-        // Frame de animación
-        int frame = tick++ / 5 % 10;
-        //int2 cell = { frame % ATLAS_COLS, frame / ATLAS_COLS };
-        int2 cell = { 1, 0 };
+  //      // Frame de animaciÃ³n
+  //      int frame = tick++ / 5 % 10;
+  //      //int2 cell = { frame % ATLAS_COLS, frame / ATLAS_COLS };
+  //      int2 cell = { 1, 0 };
 
 
-        // Tamaño del sprite
-        int spriteW = (ATLAS_WIDTH / ATLAS_COLS);
-        int spriteH = (ATLAS_HEIGHT / ATLAS_ROWS);
+  //      // TamaÃ±o del sprite
+  //      int spriteW = (ATLAS_WIDTH / ATLAS_COLS);
+  //      int spriteH = (ATLAS_HEIGHT / ATLAS_ROWS);
 
   //      for(int x = 0; x < 24; ++x)
   //      {
@@ -238,33 +256,101 @@ int main()
 		//	}
 		//}
 
+	    int spriteidx =  -1; // index for spriteBatch
         // Sprite 1
-        spriteBatch[0] = 
+
+        //spriteidx++;
+        //// Sprite 2
+        //spriteBatch[1] =
+        //{
+        //    {50, 200},
+        //    {128, 128},
+        //    {256, 416},
+        //    1.0f
+        //};
+
+
+        //spriteBatch[1] =
+        //{
+        //    {50, 200},
+        //    {128, 128},
+        //    {256, 416},
+        //    1.0f
+        //};
+
+
+        for(int i = 0; i < 3; ++i)
         {
-            {300, 300},  // screenPos
-            {spriteW, spriteH},
-            {cell.x * spriteW, cell.y * spriteH},
-            4
+			float cellY = (128 * 2) * (i); // row index
+            spriteBatch[i] = {};
+            spriteBatch[i].screenPos.x = cellY; // position in a grid
+            spriteBatch[i].screenPos.y = 180 * 2;
+            spriteBatch[i].size.x = 128;
+            spriteBatch[i].size.y = 128;
+            spriteBatch[i].atlasPos.x = 256; // atlas position, assuming all sprites are the same
+            spriteBatch[i].atlasPos.y = 416;
+            spriteBatch[i].scale = 1;
+		}
+
+
+        for (int i = 4; i < 7; ++i)
+        {
+            float cellY = ((128 * 2) * (i - 4)) + 128; // row index
+            spriteBatch[i] = {};
+            spriteBatch[i].screenPos.x = cellY; // position in a grid
+            spriteBatch[i].screenPos.y = 180 * 2;
+            spriteBatch[i].size.x = 128;
+            spriteBatch[i].size.y = 128;
+            spriteBatch[i].atlasPos.x = 512; // atlas position, assuming all sprites are the same
+            spriteBatch[i].atlasPos.y = 384;
+            spriteBatch[i].scale = 1;
+        }
+
+        //// Sprite 2
+        spriteBatch[8] =
+        {
+            {128 * 6, 180 * 2},
+            {256, 256},
+            {0, 0},
+            0.5f
         };
 
-        //// Sprite 2
-        //spriteBatch[1] = 
-        //{
-        //    {300, 200},  // otra posición
-        //    {spriteW, spriteH},
-        //    {cell.x * spriteW, cell.y * spriteH},
-        //    1
-        //};
+        spriteBatch[9] =
+        {
+            {50, 50},
+            {128, 128},
+            {320, 544},
+            1.0f
+        };
+
+        spriteBatch[10] =
+        {
+            {50 + 128, 100},
+            {128, 128},
+            {320, 544},
+            1.0f
+        };
+
+        spriteBatch[11] =
+        {
+            {50 + 256, 150},
+            {128, 128},
+            {320, 544},
+            1.0f
+        };
 
 
-        //// Sprite 2
-        //spriteBatch[2] = 
-        //{
-        //    {100, 400},  // otra posición
-        //    {spriteW, spriteH},
-        //    {cell.x * spriteW, cell.y * spriteH},
-        //    1
-        //};
+        spriteBatch[12] =
+        {
+            {50 + 384, 200},
+            {128, 128},
+            {320, 544},
+            1.0f
+        };
+
+
+
+   
 
 		if (scale > 2.0f) scale = 0.0f; // reset scale after reaching a certain value
 
@@ -301,4 +387,7 @@ int main()
         deviceContext->DrawInstanced(4, spriteCount, 0, 0);
         swapChain->Present(1, 0);
     }
+
+
+	return 0;
 }

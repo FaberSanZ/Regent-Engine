@@ -15,6 +15,7 @@
 
 
 #define TITLE L"Sprite renderer"
+#define MAX_SPRITES 4096
 
 
 int main()
@@ -38,24 +39,19 @@ int main()
 
 
     ID3D11Device1* device;
-
     baseDevice->QueryInterface(__uuidof(ID3D11Device1), reinterpret_cast<void**>(&device));
 
     ID3D11DeviceContext1* deviceContext;
-
     baseDeviceContext->QueryInterface(__uuidof(ID3D11DeviceContext1), reinterpret_cast<void**>(&deviceContext));
 
 
     IDXGIDevice1* dxgiDevice;
-
     device->QueryInterface(__uuidof(IDXGIDevice1), reinterpret_cast<void**>(&dxgiDevice));
 
     IDXGIAdapter* dxgiAdapter;
-
     dxgiDevice->GetAdapter(&dxgiAdapter);
 
     IDXGIFactory2* dxgiFactory;
-
     dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), reinterpret_cast<void**>(&dxgiFactory));
 
 
@@ -69,18 +65,13 @@ int main()
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 
     IDXGISwapChain1* swapChain;
-
     dxgiFactory->CreateSwapChainForHwnd(device, window, &swapChainDesc, nullptr, nullptr, &swapChain);
-
     swapChain->GetDesc1(&swapChainDesc); // get actual window width & height
 
 
     ID3D11Texture2D* framebufferTexture;
-
     swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&framebufferTexture));
-
     ID3D11RenderTargetView* framebufferRTV;
-
     device->CreateRenderTargetView(framebufferTexture, nullptr, &framebufferRTV);
 
 
@@ -90,7 +81,6 @@ int main()
 
     if (!pixels)
     {
-        printf("Error cargando imagen\n");
         //return;
     }
 
@@ -139,7 +129,6 @@ int main()
     device->CreateShaderResourceView(atlasTexture, nullptr, &atlasSRV);
 
 
-#define MAX_SPRITES 4096
 
     struct int2 { int x, y; };
     struct Sprite { int2 screenPos, size, atlasPos; float scale; };
@@ -153,7 +142,6 @@ int main()
     spriteBufferDesc.StructureByteStride = sizeof(Sprite);
 
     ID3D11Buffer* spriteBuffer;
-
     device->CreateBuffer(&spriteBufferDesc, nullptr, &spriteBuffer);
 
     D3D11_SHADER_RESOURCE_VIEW_DESC spriteSRVDesc = {};
@@ -161,9 +149,8 @@ int main()
     spriteSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
     spriteSRVDesc.Buffer.NumElements = MAX_SPRITES;
 
-    ID3D11ShaderResourceView* spriteSRV;
-
-    device->CreateShaderResourceView(spriteBuffer, &spriteSRVDesc, &spriteSRV);
+    ID3D11ShaderResourceView* textureAtlas;
+    device->CreateShaderResourceView(spriteBuffer, &spriteSRVDesc, &textureAtlas);
 
 
     D3D11_SAMPLER_DESC pointsamplerDesc = {};
@@ -173,38 +160,31 @@ int main()
     pointsamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
     pointsamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 
-    ID3D11SamplerState* pointSampler;
-
-    device->CreateSamplerState(&pointsamplerDesc, &pointSampler);
+    ID3D11SamplerState* sampler;
+    device->CreateSamplerState(&pointsamplerDesc, &sampler);
 
 
     ID3DBlob* vsBlob;
-
     D3DCompileFromFile(L"../../Assets/Shaders/PixelShader.hlsl", nullptr, nullptr, "vs", "vs_5_0", 0, 0, &vsBlob, nullptr);
-
     ID3D11VertexShader* vertexShader;
-
     device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, &vertexShader);
 
 
     ID3DBlob* psBlob;
-
     D3DCompileFromFile(L"../../Assets/Shaders/PixelShader.hlsl", nullptr, nullptr, "ps", "ps_5_0", 0, 0, &psBlob, nullptr);
-
     ID3D11PixelShader* pixelShader;
-
     device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &pixelShader);
 
 
     FLOAT clearColor[4] = { 0.0f, 0.2f, 0.4f, 1 };
 
-    D3D11_VIEWPORT framebufferVP = { 0, 0, static_cast<float>(swapChainDesc.Width), static_cast<float>(swapChainDesc.Height), 0, 1 };
+    D3D11_VIEWPORT viewport = { 0, 0, static_cast<float>(swapChainDesc.Width), static_cast<float>(swapChainDesc.Height), 0, 1 };
 
 
     Sprite* spriteBatch = reinterpret_cast<Sprite*>(HeapAlloc(GetProcessHeap(), 0, MAX_SPRITES * sizeof(Sprite)));
 
     float scale = 0.0f;
-	int spriteCount = 24 * 24; // number of sprites to render in this example
+	int spriteCount = 16 * 16; // number of sprites to render in this example
     while (true)
     {
         MSG msg;
@@ -293,11 +273,19 @@ int main()
 
 
 
+        spriteBatch[13] =
+        {
+            {16 * 3, 490},
+            {40, 256},
+            {841, 625},
+            1.5f
+        };
+
+
    
 
 		if (scale > 2.0f) scale = 0.0f; // reset scale after reaching a certain value
 
-        ///////////////////////////////////////////////////////////////////////////////////////////
 
         D3D11_MAPPED_SUBRESOURCE spriteBufferMSR;
 
@@ -307,7 +295,6 @@ int main()
 
         deviceContext->Unmap(spriteBuffer, 0);
 
-        ///////////////////////////////////////////////////////////////////////////////////////////
 
         deviceContext->OMSetRenderTargets(1, &framebufferRTV, nullptr);
 
@@ -316,16 +303,15 @@ int main()
         deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP); // to render sprite quad using 4 vertices
 
         deviceContext->VSSetShader(vertexShader, nullptr, 0);
-        deviceContext->VSSetShaderResources(0, 1, &spriteSRV);
+        deviceContext->VSSetShaderResources(0, 1, &textureAtlas);
         deviceContext->VSSetConstantBuffers(0, 1, &constantBuffer);
 
-        deviceContext->RSSetViewports(1, &framebufferVP);
+        deviceContext->RSSetViewports(1, &viewport);
 
         deviceContext->PSSetShader(pixelShader, nullptr, 0);
         deviceContext->PSSetShaderResources(1, 1, &atlasSRV);
-        deviceContext->PSSetSamplers(0, 1, &pointSampler);
+        deviceContext->PSSetSamplers(0, 1, &sampler);
 
-        ///////////////////////////////////////////////////////////////////////////////////////////
 
         deviceContext->DrawInstanced(4, spriteCount, 0, 0);
         swapChain->Present(1, 0);

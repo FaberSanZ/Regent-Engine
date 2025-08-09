@@ -196,7 +196,6 @@ int main()
         }
 
 
-        // Frame de animación
         //static int tick = 0;
         //int frame = tick++ / 5 % 10;
         //int2 cell = { frame % ATLAS_COLS, frame / ATLAS_COLS };
@@ -259,7 +258,7 @@ int main()
             {50 + 256, 150},
             {128, 128},
             {320, 544},
-            1.0f
+            scale
         };
 
 
@@ -268,23 +267,12 @@ int main()
             {50 + 384, 200},
             {128, 128},
             {320, 544},
-            1.0f
+            scale
         };
 
+		scale += 0.0016f; // increase scale for the last two sprites
 
-
-        spriteBatch[13] =
-        {
-            {16 * 3, 490},
-            {40, 256},
-            {841, 625},
-            1.5f
-        };
-
-
-   
-
-		if (scale > 2.0f) scale = 0.0f; // reset scale after reaching a certain value
+		if (scale > 1.0f) scale = 0.0f; // reset scale after reaching a certain value
 
 
         D3D11_MAPPED_SUBRESOURCE spriteBufferMSR;

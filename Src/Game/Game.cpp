@@ -15,7 +15,8 @@
 
 
 #define TITLE L"Sprite renderer"
-#define MAX_SPRITES 4096
+// TODO: atlas to tiled
+#define MAX_SPRITES 4096 // maximum number of sprites to render in this example
 
 
 int main()
@@ -270,7 +271,7 @@ int main()
             scale
         };
 
-		scale += 0.0016f; // increase scale for the last two sprites
+		scale += 0.0018f; // increase scale for the last two sprites
 
 		if (scale > 1.0f) scale = 0.0f; // reset scale after reaching a certain value
 

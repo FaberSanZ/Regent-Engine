@@ -8,3 +8,4 @@
 - [ ] editor imgui
 - [ ] tiled
 - [ ] load map
+- [ ] game state
